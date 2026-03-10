@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "auth-service/proto;proto";
+
+message User {
+  string id = 1;
+  string email = 2;
+  string username = 3;
+  string phone = 4;
+  string gender = 5;
+  int32 age = 6;
+  string role = 7; // parent | child | admin
+  string created_at = 8;
+}
+
+message ParentChild {
+  string parent_id = 1;
+  string child_id = 2;
+  string created_at = 3;
+}
+
+message Device {
+  string id = 1;        // UUID
+  string user_id = 2;
+  string device_id = 3;
+  string user_agent = 4;
+  string created_at = 5;
+}
+
+message RefreshToken {
+  string id = 1;        // UUID
+  string user_id = 2;
+  string device_id = 3;
+  string token_hash = 4;
+  string expires_at = 5;
+  bool revoked = 6;
+  string created_at = 7;
+}
+
+message RegisterRequest {
+  string username = 1;
+  string email = 2;
+  string phone = 3;
+  string gender = 4;
+  int32 age = 5;
+  string password = 6;
+  string role = 7; // default child
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+  string device_id = 3;
+  string user_agent = 4;
+}
+
+message AuthResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  string user_id = 3;
+  string role = 4;
+}
+
+message CheckUserRequest {
+  string token = 1;
+}
+
+message CheckUserResponse {
+  string user_id = 1;
+  string role = 2;
+}
+
+message LogoutRequest {
+  string refresh_token = 1;
+}
+
+message LogoutResponse {
+  bool ok = 1;
+}
+
+service AuthService {
+  rpc Register(RegisterRequest) returns (AuthResponse);
+  rpc Login(LoginRequest) returns (AuthResponse);
+  rpc CheckUser(CheckUserRequest) returns (CheckUserResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+}
