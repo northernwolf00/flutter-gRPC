@@ -183,6 +183,15 @@ const LogoutRequest$json = {
 final $typed_data.Uint8List logoutRequestDescriptor = $convert.base64Decode(
     'Cg1Mb2dvdXRSZXF1ZXN0EiMKDXJlZnJlc2hfdG9rZW4YASABKAlSDHJlZnJlc2hUb2tlbg==');
 
+@$core.Deprecated('Use getProfileRequestDescriptor instead')
+const GetProfileRequest$json = {
+  '1': 'GetProfileRequest',
+};
+
+/// Descriptor for `GetProfileRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List getProfileRequestDescriptor = $convert.base64Decode(
+    'ChFHZXRQcm9maWxlUmVxdWVzdA==');
+
 @$core.Deprecated('Use logoutResponseDescriptor instead')
 const LogoutResponse$json = {
   '1': 'LogoutResponse',

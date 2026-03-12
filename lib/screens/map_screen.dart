@@ -7,6 +7,8 @@ import 'package:fixnum/fixnum.dart' as $fixnum;
 import 'package:geolocator/geolocator.dart';
 import '../generated/geo/geo.pbgrpc.dart';
 import '../utils/logger.dart';
+import '../services/auth_interceptor.dart';
+import '../services/auth_service.dart';
 import 'package:iconly/iconly.dart';
 
 class MapScreen extends StatefulWidget {
@@ -25,13 +27,13 @@ class _MapScreenState extends State<MapScreen> {
   late ClientChannel _channel;
 
   // Stream controller for client-streaming to server
-  StreamController<Location> _locationStreamController =
-      StreamController<Location>();
+  StreamController<LocationPoint> _locationStreamController =
+      StreamController<LocationPoint>();
 
   // Device location subscription
   StreamSubscription<Position>? _positionSubscription;
 
-  final String _currentUserId = "1";
+  String _currentUserId = "";
 
   // === UI Log state ===
   final List<LogEntry> _logs = [];
@@ -69,31 +71,39 @@ class _MapScreenState extends State<MapScreen> {
         credentials: ChannelCredentials.insecure(),
       ),
     );
-    _client = GeoServiceClient(_channel);
+    _client = GeoServiceClient(
+      _channel,
+      interceptors: [AuthInterceptor()],
+    );
     _startUploadStream();
   }
 
   void _startUploadStream() {
-    // Create a fresh stream controller if the old one is closed
-    if (_locationStreamController.isClosed) {
-      _locationStreamController = StreamController<Location>();
-    }
+    _addLog("Opening location stream...");
+    
+    // Always close the old controller if it exists and create a fresh one
+    // to avoid "Stream has already been listened to" errors during retries.
+    _locationStreamController.close();
+    _locationStreamController = StreamController<LocationPoint>();
 
-    _client.uploadLocations(_locationStreamController.stream).then(
-      (summary) {
+    _client.streamLocations(_locationStreamController.stream).then(
+      (response) {
         setState(() =>
-            _streamStatus = "✅ Completed (received: ${summary.received})");
-        _addLog(
-            "Stream completed. Server received: ${summary.received} locations.");
+            _streamStatus = response.ok ? "✅ Connected" : "⚠️ Server refused");
+        _addLog("Stream accepted by server. Status: ${response.ok}");
         _retryCount = 0;
       },
     ).catchError((error) {
-      setState(() => _streamStatus = "❌ Error");
-      _addLog("STREAM ERROR: $error", level: LogLevel.error);
-      _scheduleRetry();
+      if (mounted) {
+        setState(() => _streamStatus = "❌ Error");
+        _addLog("STREAM ERROR: $error", level: LogLevel.error);
+        _scheduleRetry();
+      }
     });
-    setState(() => _streamStatus = "📡 Stream opened");
-    _addLog("Upload stream started", level: LogLevel.success);
+
+    if (mounted) {
+      setState(() => _streamStatus = "📡 Stream opened");
+    }
   }
 
   void _scheduleRetry() {
@@ -117,16 +127,15 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-  void _reconnect() {
-    _retryCount = 0;
-    _channel.shutdown().then((_) {
-      if (mounted) {
-        _initGrpc();
-      }
-    });
-  }
-
   Future<void> _initLocation() async {
+    // Get actual user ID
+    final userId = await AuthService().getUserId();
+    if (userId != null) {
+      setState(() {
+        _currentUserId = userId;
+      });
+    }
+
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -177,16 +186,22 @@ class _MapScreenState extends State<MapScreen> {
     final location = Location()
       ..userId = _currentUserId
       ..lat = position.latitude
-      ..lng = position.longitude
-      ..timestamp = $fixnum.Int64(DateTime.now().millisecondsSinceEpoch);
+      ..lng = position.longitude;
 
     _updateUserLocation(location);
 
     // Send to server via the open stream
     if (!_locationStreamController.isClosed) {
-      _locationStreamController.add(location);
+      final point = LocationPoint()
+        ..lat = position.latitude
+        ..lng = position.longitude
+        ..accuracy = position.accuracy
+        ..speed = position.speed
+        ..timestamp = $fixnum.Int64(DateTime.now().millisecondsSinceEpoch);
+
+      _locationStreamController.add(point);
       _addLog(
-          "→ Sent: Lat=${location.lat.toStringAsFixed(5)}, Lng=${location.lng.toStringAsFixed(5)}",
+          "→ Sent: Lat=${point.lat.toStringAsFixed(5)}, Lng=${point.lng.toStringAsFixed(5)}",
           level: LogLevel.sent);
     } else {
       _addLog("Stream closed! Cannot send location.", level: LogLevel.error);
@@ -210,6 +225,8 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Stack(
@@ -223,9 +240,11 @@ class _MapScreenState extends State<MapScreen> {
             ),
             children: [
               TileLayer(
-                urlTemplate:
-                    'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+                urlTemplate: isDark 
+                    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                    : 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
                 userAgentPackageName: 'com.example.flutter_grps',
+                subdomains: const ['a', 'b', 'c', 'd'],
               ),
               MarkerLayer(
                 markers: _userLocations.values.map((loc) {
@@ -242,7 +261,7 @@ class _MapScreenState extends State<MapScreen> {
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color:
-                                isMe ? const Color(0xFF4A00E0) : Colors.white,
+                                isMe ? const Color(0xFF4A00E0) : (isDark ? Colors.grey[800] : Colors.white),
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
@@ -258,7 +277,7 @@ class _MapScreenState extends State<MapScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color:
-                                  isMe ? Colors.white : const Color(0xFF333333),
+                                  isMe ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF333333)),
                             ),
                           ),
                         ),
@@ -266,7 +285,7 @@ class _MapScreenState extends State<MapScreen> {
                         Container(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white,
+                            color: isDark ? Colors.grey[900] : Colors.white,
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.1),
@@ -281,7 +300,7 @@ class _MapScreenState extends State<MapScreen> {
                               isMe ? IconlyLight.user : IconlyLight.profile,
                               color: isMe
                                   ? const Color(0xFF4A00E0)
-                                  : const Color(0xFF8E2DE2),
+                                  : (isDark ? Colors.white70 : const Color(0xFF8E2DE2)),
                               size: 24,
                             ),
                           ),
@@ -302,7 +321,7 @@ class _MapScreenState extends State<MapScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.9),
+                color: isDark ? const Color(0xFF1E1E2C).withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
@@ -324,21 +343,15 @@ class _MapScreenState extends State<MapScreen> {
                         color: Color(0xFF4A00E0)),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Live Tracker',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF333333),
+                        color: isDark ? Colors.white : const Color(0xFF333333),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon:
-                        const Icon(IconlyLight.swap, color: Color(0xFF666666)),
-                    tooltip: 'Reconnect gRPC',
-                    onPressed: _reconnect,
                   ),
                   IconButton(
                     icon: Icon(_showLogs ? IconlyLight.hide : IconlyLight.show,

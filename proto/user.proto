@@ -76,6 +76,8 @@ message LogoutRequest {
   string refresh_token = 1;
 }
 
+message GetProfileRequest {}
+
 message LogoutResponse {
   bool ok = 1;
 }
@@ -85,4 +87,5 @@ service AuthService {
   rpc Login(LoginRequest) returns (AuthResponse);
   rpc CheckUser(CheckUserRequest) returns (CheckUserResponse);
   rpc Logout(LogoutRequest) returns (LogoutResponse);
+  rpc GetProfile(GetProfileRequest) returns (User);
 }

@@ -48,6 +48,10 @@ class AuthServiceClient extends $grpc.Client {
     return $createUnaryCall(_$logout, request, options: options);
   }
 
+  $grpc.ResponseFuture<$0.User> getProfile($0.GetProfileRequest request, {$grpc.CallOptions? options,}) {
+    return $createUnaryCall(_$getProfile, request, options: options);
+  }
+
     // method descriptors
 
   static final _$register = $grpc.ClientMethod<$0.RegisterRequest, $0.AuthResponse>(
@@ -66,6 +70,10 @@ class AuthServiceClient extends $grpc.Client {
       '/auth.AuthService/Logout',
       ($0.LogoutRequest value) => value.writeToBuffer(),
       $0.LogoutResponse.fromBuffer);
+  static final _$getProfile = $grpc.ClientMethod<$0.GetProfileRequest, $0.User>(
+      '/auth.AuthService/GetProfile',
+      ($0.GetProfileRequest value) => value.writeToBuffer(),
+      $0.User.fromBuffer);
 }
 
 @$pb.GrpcServiceName('auth.AuthService')
@@ -101,6 +109,13 @@ abstract class AuthServiceBase extends $grpc.Service {
         false,
         ($core.List<$core.int> value) => $0.LogoutRequest.fromBuffer(value),
         ($0.LogoutResponse value) => value.writeToBuffer()));
+    $addMethod($grpc.ServiceMethod<$0.GetProfileRequest, $0.User>(
+        'GetProfile',
+        getProfile_Pre,
+        false,
+        false,
+        ($core.List<$core.int> value) => $0.GetProfileRequest.fromBuffer(value),
+        ($0.User value) => value.writeToBuffer()));
   }
 
   $async.Future<$0.AuthResponse> register_Pre($grpc.ServiceCall $call, $async.Future<$0.RegisterRequest> $request) async {
@@ -126,5 +141,11 @@ abstract class AuthServiceBase extends $grpc.Service {
   }
 
   $async.Future<$0.LogoutResponse> logout($grpc.ServiceCall call, $0.LogoutRequest request);
+
+  $async.Future<$0.User> getProfile_Pre($grpc.ServiceCall $call, $async.Future<$0.GetProfileRequest> $request) async {
+    return getProfile($call, await $request);
+  }
+
+  $async.Future<$0.User> getProfile($grpc.ServiceCall call, $0.GetProfileRequest request);
 
 }

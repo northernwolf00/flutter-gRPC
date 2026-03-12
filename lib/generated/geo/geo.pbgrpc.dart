@@ -32,16 +32,32 @@ class GeoServiceClient extends $grpc.Client {
 
   GeoServiceClient(super.channel, {super.options, super.interceptors});
 
-  $grpc.ResponseFuture<$0.UploadSummary> uploadLocations($async.Stream<$0.Location> request, {$grpc.CallOptions? options,}) {
-    return $createStreamingCall(_$uploadLocations, request, options: options).single;
+  $grpc.ResponseFuture<$0.StreamLocationResponse> streamLocations($async.Stream<$0.LocationPoint> request, {$grpc.CallOptions? options,}) {
+    return $createStreamingCall(_$streamLocations, request, options: options).single;
+  }
+
+  $grpc.ResponseFuture<$0.GetLocationsResponse> getLocations($0.GetLocationsRequest request, {$grpc.CallOptions? options,}) {
+    return $createUnaryCall(_$getLocations, request, options: options);
+  }
+
+  $grpc.ResponseFuture<$0.GetNearbyResponse> getNearby($0.GetNearbyRequest request, {$grpc.CallOptions? options,}) {
+    return $createUnaryCall(_$getNearby, request, options: options);
   }
 
     // method descriptors
 
-  static final _$uploadLocations = $grpc.ClientMethod<$0.Location, $0.UploadSummary>(
-      '/geo.GeoService/UploadLocations',
-      ($0.Location value) => value.writeToBuffer(),
-      $0.UploadSummary.fromBuffer);
+  static final _$streamLocations = $grpc.ClientMethod<$0.LocationPoint, $0.StreamLocationResponse>(
+      '/geo.GeoService/StreamLocations',
+      ($0.LocationPoint value) => value.writeToBuffer(),
+      $0.StreamLocationResponse.fromBuffer);
+  static final _$getLocations = $grpc.ClientMethod<$0.GetLocationsRequest, $0.GetLocationsResponse>(
+      '/geo.GeoService/GetLocations',
+      ($0.GetLocationsRequest value) => value.writeToBuffer(),
+      $0.GetLocationsResponse.fromBuffer);
+  static final _$getNearby = $grpc.ClientMethod<$0.GetNearbyRequest, $0.GetNearbyResponse>(
+      '/geo.GeoService/GetNearby',
+      ($0.GetNearbyRequest value) => value.writeToBuffer(),
+      $0.GetNearbyResponse.fromBuffer);
 }
 
 @$pb.GrpcServiceName('geo.GeoService')
@@ -49,15 +65,41 @@ abstract class GeoServiceBase extends $grpc.Service {
   $core.String get $name => 'geo.GeoService';
 
   GeoServiceBase() {
-    $addMethod($grpc.ServiceMethod<$0.Location, $0.UploadSummary>(
-        'UploadLocations',
-        uploadLocations,
+    $addMethod($grpc.ServiceMethod<$0.LocationPoint, $0.StreamLocationResponse>(
+        'StreamLocations',
+        streamLocations,
         true,
         false,
-        ($core.List<$core.int> value) => $0.Location.fromBuffer(value),
-        ($0.UploadSummary value) => value.writeToBuffer()));
+        ($core.List<$core.int> value) => $0.LocationPoint.fromBuffer(value),
+        ($0.StreamLocationResponse value) => value.writeToBuffer()));
+    $addMethod($grpc.ServiceMethod<$0.GetLocationsRequest, $0.GetLocationsResponse>(
+        'GetLocations',
+        getLocations_Pre,
+        false,
+        false,
+        ($core.List<$core.int> value) => $0.GetLocationsRequest.fromBuffer(value),
+        ($0.GetLocationsResponse value) => value.writeToBuffer()));
+    $addMethod($grpc.ServiceMethod<$0.GetNearbyRequest, $0.GetNearbyResponse>(
+        'GetNearby',
+        getNearby_Pre,
+        false,
+        false,
+        ($core.List<$core.int> value) => $0.GetNearbyRequest.fromBuffer(value),
+        ($0.GetNearbyResponse value) => value.writeToBuffer()));
   }
 
-  $async.Future<$0.UploadSummary> uploadLocations($grpc.ServiceCall call, $async.Stream<$0.Location> request);
+  $async.Future<$0.StreamLocationResponse> streamLocations($grpc.ServiceCall call, $async.Stream<$0.LocationPoint> request);
+
+  $async.Future<$0.GetLocationsResponse> getLocations_Pre($grpc.ServiceCall $call, $async.Future<$0.GetLocationsRequest> $request) async {
+    return getLocations($call, await $request);
+  }
+
+  $async.Future<$0.GetLocationsResponse> getLocations($grpc.ServiceCall call, $0.GetLocationsRequest request);
+
+  $async.Future<$0.GetNearbyResponse> getNearby_Pre($grpc.ServiceCall $call, $async.Future<$0.GetNearbyRequest> $request) async {
+    return getNearby($call, await $request);
+  }
+
+  $async.Future<$0.GetNearbyResponse> getNearby($grpc.ServiceCall call, $0.GetNearbyRequest request);
 
 }

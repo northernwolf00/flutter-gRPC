@@ -2,19 +2,50 @@ syntax = "proto3";
 
 package geo;
 
-option go_package = "geo/api;geo";
+option go_package = "github.com/ezkahan/geo-service/proto;proto";
 
-service GeoService {
-  rpc UploadLocations(stream Location) returns (UploadSummary);
+message LocationPoint {
+  double lat = 1;
+  double lng = 2;
+  double accuracy = 3;
+  double speed = 4;
+  int64 timestamp = 5; // unix millis
 }
+
+message StreamLocationResponse {
+  bool ok = 1;
+}
+
+message GetLocationsRequest {}
 
 message Location {
   string user_id = 1;
   double lat = 2;
   double lng = 3;
-  int64 timestamp = 4;
 }
 
-message UploadSummary {
-  int32 received = 1;
+message GetLocationsResponse {
+  repeated Location locations = 1;
+}
+
+message GetNearbyRequest {
+  double lat = 1;
+  double lng = 2;
+  double radius_km = 3;
+}
+
+message GetNearbyResponse {
+  repeated Location locations = 1;
+}
+
+service GeoService {
+
+  rpc StreamLocations(stream LocationPoint)
+      returns (StreamLocationResponse);
+
+  rpc GetLocations(GetLocationsRequest)
+      returns (GetLocationsResponse);
+
+  rpc GetNearby(GetNearbyRequest)
+      returns (GetNearbyResponse);
 }

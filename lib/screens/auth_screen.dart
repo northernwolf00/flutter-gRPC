@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:grpc/grpc.dart';
 import 'package:iconly/iconly.dart';
 import '../generated/auth/user.pbgrpc.dart';
-import 'map_screen.dart'; // To navigate to MapScreen
+import '../services/auth_service.dart';
+import 'navigation_screen.dart';
+import 'register_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -63,12 +65,20 @@ class _AuthScreenState extends State<AuthScreen> {
       debugPrint('Has Refresh Token: ${response.refreshToken.isNotEmpty}');
       debugPrint('-----------------------------');
 
+      // Save token and user data
+      await AuthService().saveAuthData(
+        token: response.accessToken,
+        refreshToken: response.refreshToken,
+        userId: response.userId,
+        role: response.role,
+      );
+
       if (!mounted) return;
 
       // Navigate to MapScreen on success
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const MapScreen()),
+        MaterialPageRoute(builder: (context) => const NavigationScreen()),
       );
     } catch (e) {
       if (mounted) {
@@ -278,6 +288,23 @@ class _AuthScreenState extends State<AuthScreen> {
                                     ),
                                   ),
                                 ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Navigation to Register
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                            );
+                          },
+                          child: const Text(
+                            "Don't have an account? Sign Up",
+                            style: TextStyle(
+                              color: Color(0xFF4A00E0),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ],
                     ),

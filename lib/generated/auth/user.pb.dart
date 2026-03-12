@@ -860,6 +860,36 @@ class LogoutRequest extends $pb.GeneratedMessage {
   void clearRefreshToken() => $_clearField(1);
 }
 
+class GetProfileRequest extends $pb.GeneratedMessage {
+  factory GetProfileRequest() => create();
+
+  GetProfileRequest._();
+
+  factory GetProfileRequest.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(data, registry);
+  factory GetProfileRequest.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'GetProfileRequest', package: const $pb.PackageName(_omitMessageNames ? '' : 'auth'), createEmptyInstance: create)
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetProfileRequest clone() => GetProfileRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetProfileRequest copyWith(void Function(GetProfileRequest) updates) => super.copyWith((message) => updates(message as GetProfileRequest)) as GetProfileRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static GetProfileRequest create() => GetProfileRequest._();
+  @$core.override
+  GetProfileRequest createEmptyInstance() => create();
+  static $pb.PbList<GetProfileRequest> createRepeated() => $pb.PbList<GetProfileRequest>();
+  @$core.pragma('dart2js:noInline')
+  static GetProfileRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<GetProfileRequest>(create);
+  static GetProfileRequest? _defaultInstance;
+}
+
 class LogoutResponse extends $pb.GeneratedMessage {
   factory LogoutResponse({
     $core.bool? ok,
